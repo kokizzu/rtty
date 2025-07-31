@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -74,7 +75,7 @@ func run(ws *websocket.Conn) {
 
 		rows, cols, err := windowSize(msg.Data)
 		if err != nil {
-			_, _ = ws.Write([]byte(fmt.Sprintf("%s\r\n", err)))
+			_, _ = fmt.Fprintf(ws, "%s\r\n", err)
 			return
 		}
 		winsize := &pty.Winsize{
@@ -190,10 +191,8 @@ func checkOrigin(allowOrigins []string) func(config *websocket.Config, req *http
 			return err
 		}
 
-		for _, allowOrigin := range allowOrigins {
-			if config.Origin.Host == allowOrigin {
-				return nil
-			}
+		if slices.Contains(allowOrigins, config.Origin.Host) {
+			return nil
 		}
 
 		msg := "not allowed origin: %s\n"
