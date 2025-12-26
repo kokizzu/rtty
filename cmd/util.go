@@ -49,14 +49,21 @@ func getenv(key, def string) string {
 	return def
 }
 
-func windowSize(msg any) (rows, cols uint16, err error) {
+func windowSize(msg any) (uint16, uint16, error) {
 	data, ok := msg.(map[string]any)
 	if !ok {
 		return 0, 0, fmt.Errorf("invalid message: %#+v", msg)
 	}
 
-	rows = uint16(data["rows"].(float64))
-	cols = uint16(data["cols"].(float64))
+	rows, ok := data["rows"].(float64)
+	if !ok {
+		return 0, 0, fmt.Errorf("invalid rows: %#+v", data["rows"])
+	}
 
-	return
+	cols, ok := data["cols"].(float64)
+	if !ok {
+		return 0, 0, fmt.Errorf("invalid cols: %#+v", data["cols"])
+	}
+
+	return uint16(rows), uint16(cols), nil
 }
