@@ -20,8 +20,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	_ "embed"
-
 	"github.com/creack/pty"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/websocket"
@@ -60,7 +58,10 @@ var ptmx *os.File
 var execCmd *exec.Cmd
 
 func run(ws *websocket.Conn) {
-	defer ws.Close()
+	defer func() {
+		err := ws.Close()
+		log.Println("failed to close websocket:", err)
+	}()
 
 	wsconn := &wsConn{
 		conn: ws,
@@ -109,7 +110,10 @@ func run(ws *websocket.Conn) {
 
 			if msg.Event == EventClose {
 				log.Println("close websocket")
-				ws.Close()
+				err := ws.Close()
+				if err != nil {
+					log.Println("failed to close websocket:", err)
+				}
 				return
 			}
 
@@ -195,7 +199,7 @@ func checkOrigin(allowOrigins []string) func(config *websocket.Config, req *http
 			return nil
 		}
 
-		msg := "not allowed origin: %s\n"
+		msg := "not allowed origin: %s"
 		log.Printf(msg, config.Origin.Host)
 		return fmt.Errorf(msg, config.Origin.Host)
 	}
@@ -286,7 +290,10 @@ var runCmd = &cobra.Command{
 					}
 
 					if state.ExitCode() != -1 {
-						ptmx.Close()
+						err := ptmx.Close()
+						if err != nil {
+							log.Println("failed to close pty:", err)
+						}
 						ptmx = nil
 						execCmd = nil
 					}
