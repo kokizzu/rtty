@@ -282,6 +282,7 @@ var runCmd = &cobra.Command{
 		// check process state
 		go func() {
 			ticker := time.NewTicker(time.Duration(checkProcInterval) * time.Second)
+			defer ticker.Stop()
 			for range ticker.C {
 				if execCmd != nil {
 					state, err := execCmd.Process.Wait()
